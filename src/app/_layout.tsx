@@ -29,7 +29,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 1000);
     }
   }, [loaded]);
 
@@ -42,7 +44,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar hidden />
+      <StatusBar translucent />
     </ThemeProvider>
   );
 }

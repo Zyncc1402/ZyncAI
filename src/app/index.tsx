@@ -5,23 +5,36 @@ import {
   ScrollView,
   TouchableOpacity,
   Keyboard,
+  FlatList,
+  Dimensions,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
+import formatResponse from "lib/FormatResponse";
 
 const Index = () => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [responseBlock, setResponseBlock] = useState([]);
+  const [geminiResponse, setGeminiResponse] = useState([]);
+  const [llamaResponse, setLlamaResponse] = useState([]);
+  const [combinedResponse, setCombinedResponse] = useState([]);
+
+  useEffect(() => {
+    setCombinedResponse([geminiResponse, llamaResponse]);
+  }, [geminiResponse, llamaResponse]);
+
   const inputRef = useRef(null);
+  const scrollViewRef = useRef(null);
 
   async function handleSubmit() {
     try {
       if (query.length >= 2) {
         Keyboard.dismiss();
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollToEnd({ animated: true });
+        }
         inputRef.current.clear();
         setLoading(true);
         const response = await fetch("https://zyncai.vercel.app/api", {
@@ -34,14 +47,26 @@ const Index = () => {
         const res = await response.json();
         setError(false);
         setLoading(false);
-        setResponseBlock((prev) => [
+        setGeminiResponse((prev) => [
           ...prev,
           {
             query: query.trimEnd().trimStart(),
-            res,
+            res: formatResponse(res.Gemini),
+            provider: "Gemini",
+          },
+        ]);
+        setLlamaResponse((prev) => [
+          ...prev,
+          {
+            query: query.trimEnd().trimStart(),
+            res: formatResponse(res.Llama),
+            provider: "Llama",
           },
         ]);
       }
+      console.log("geminiResponse", geminiResponse);
+      console.log("llamaResponse", llamaResponse);
+      console.log("combinedResponse", combinedResponse);
     } catch (error) {
       setLoading(false);
       setError(true);
@@ -64,64 +89,111 @@ const Index = () => {
               color={"white"}
               size={26}
               onPress={() => {
-                setResponseBlock([]);
+                setCombinedResponse([]);
+                setGeminiResponse([]);
+                setLlamaResponse([]);
                 setQuery("");
               }}
             />
-            <Ionicons name="menu-outline" color={"white"} size={40} />
           </View>
         </View>
-        <ScrollView className="h-full">
+        <ScrollView
+          className="h-full"
+          showsVerticalScrollIndicator={false}
+          ref={scrollViewRef}
+        >
           <View className="py-2">
-            {!loading && responseBlock.length == 0 && (
+            {!loading && geminiResponse.length == 0 && (
               <View className="px-2 mt-5">
                 <Text className="text-5xl text-[#22c55e] font-psemibold">
                   Hello,
                 </Text>
-                <Text className="text-5xl text-[#444746] font-psemibold">
+                <Text className="text-5xl text-[#444746] font-psemibold mt-3">
                   How can I help you today?
+                </Text>
+                <Text className="text-[#444746] font-pregular mt-3 text-xl">
+                  Talk to both Gemini and Llama AI Assistants at the same time!
+                  Just swipe your screen after typing your question
                 </Text>
               </View>
             )}
-            {responseBlock.map((singleResponse, i) => (
-              <View className="px-2 relative mb-4" key={i}>
-                <View
-                  className="place-content-end mb-4"
-                  style={{ alignSelf: "flex-end" }}
-                >
-                  <Text
-                    style={{
-                      alignSelf: "flex-start",
-                      textAlignVertical: "center",
-                      borderRadius: 24,
-                      overflow: "hidden",
-                    }}
-                    className="text-white font-pmedium text-lg bg-[#1a1a1a] p-3 rounded-3xl"
-                  >
-                    {singleResponse.query}
-                  </Text>
-                </View>
-                <View>
-                  <Text
-                    className="text-white font-pmedium text-lg bg-[#1a1a1a] pt-5 px-3 rounded-3xl"
-                    style={{
-                      alignSelf: "flex-start",
-                      textAlignVertical: "center",
-                      borderRadius: 24,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {singleResponse.res}
-                  </Text>
-                </View>
-              </View>
-            ))}
+            <FlatList
+              snapToAlignment="center"
+              snapToInterval={Dimensions.get("window").width}
+              decelerationRate="fast"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={combinedResponse}
+              renderItem={({ item }) => {
+                return (
+                  <View>
+                    {item.map((singleResponse) => (
+                      <View
+                        className="px-2 relative mb-4 min-w-[100vw] max-w-[100vw]"
+                        key={Math.random()}
+                      >
+                        <View
+                          className="place-content-end mb-4"
+                          style={{ alignSelf: "flex-end" }}
+                        >
+                          <Text
+                            style={{
+                              alignSelf: "flex-start",
+                              textAlignVertical: "center",
+                              borderRadius: 24,
+                              overflow: "hidden",
+                            }}
+                            className="text-white font-pmedium text-lg bg-[#1a1a1a] p-3 rounded-3xl"
+                          >
+                            {singleResponse.query}
+                          </Text>
+                        </View>
+                        <View>
+                          <Text
+                            className="text-white font-pmedium text-lg bg-[#1a1a1a] pt-5 px-3 rounded-3xl"
+                            style={{
+                              alignSelf: "flex-start",
+                              textAlignVertical: "center",
+                              borderRadius: 24,
+                              overflow: "hidden",
+                            }}
+                          >
+                            {singleResponse.res}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                );
+              }}
+            />
             {loading && (
-              <View className="w-full h-[300px] bg-[#1a1a1a] rounded-3xl animate-pulse"></View>
+              <View>
+                <Text
+                  style={{
+                    alignSelf: "flex-end",
+                    textAlignVertical: "center",
+                    borderRadius: 24,
+                    overflow: "hidden",
+                  }}
+                  className="text-white font-pmedium text-lg bg-[#1a1a1a] p-3  mb-4 rounded-3xl"
+                >
+                  {query}
+                </Text>
+                <View className="w-[80vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-5 ml-2" />
+                <View className="w-[90vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[60vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[70vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[90vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[70vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[50vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[80vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+                <View className="w-[70vw] h-[15px] bg-[#1a1a1a] rounded-3xl animate-pulse mt-3 ml-2" />
+              </View>
             )}
           </View>
         </ScrollView>
-        {!loading && responseBlock.length == 0 && (
+        {!loading && geminiResponse.length == 0 && (
           <View className="gap-4 mb-6">
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-4">
@@ -194,15 +266,3 @@ const Index = () => {
 };
 
 export default Index;
-
-// <TouchableOpacity>
-//   <Text
-//     className="text-white p-5 rounded-2xl"
-//     onPress={() => {
-//       setResponse("");
-//       setQuery("");
-//     }}
-//   >
-//     <FontAwesome name="ban" size={40} />
-//   </Text>
-// </TouchableOpacity>
