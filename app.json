@@ -1,21 +1,44 @@
 {
   "expo": {
-    "scheme": "acme",
+    "name": "ZyncAI",
+    "slug": "ZyncAI",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "ZyncAI",
     "userInterfaceStyle": "automatic",
-    "orientation": "default",
-    "web": {
-      "output": "static",
-      "bundler": "metro"
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
     },
-    "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://n"
-        }
-      ]
-    ],
-    "name": "chandan",
-    "slug": "chandan"
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "softwareKeyboardLayoutMode": "pan",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.zync.ai"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "8f8f936d-5801-4231-b635-39468bda2c22"
+      }
+    }
   }
 }
