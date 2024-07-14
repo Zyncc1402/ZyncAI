@@ -3,11 +3,11 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import "react-native-reanimated";
 import "../global.css";
-import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
+import * as Updates from "expo-updates";
+import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,12 +27,47 @@ export default function RootLayout() {
     "Poppins-Thin": require("../../assets/fonts/Poppins-Thin.ttf"),
   });
 
+  async function onFetchUpdateAsync() {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+
+      if (update.isAvailable) {
+        Alert.alert(
+          "An Update is Available",
+          "Click Install to Update to the latest Version",
+          [
+            {
+              text: "Cancel",
+              onPress: () => {},
+              style: "destructive",
+            },
+            {
+              text: "Install",
+              onPress: async () => {
+                await Updates.fetchUpdateAsync();
+                await Updates.reloadAsync();
+              },
+              style: "default",
+            },
+          ],
+          {
+            cancelable: true,
+            onDismiss: () => {},
+          }
+        );
+      }
+    } catch (error) {
+      alert(`Error fetching latest Expo update: ${error}`);
+    }
+  }
+
   useEffect(() => {
     if (loaded) {
       setTimeout(() => {
         SplashScreen.hideAsync();
       }, 1000);
     }
+    onFetchUpdateAsync();
   }, [loaded]);
 
   if (!loaded) {
@@ -42,9 +77,18 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={DarkTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+            statusBarColor: "black",
+            contentStyle: {
+              paddingTop: 10,
+            },
+          }}
+        />
       </Stack>
-      <StatusBar translucent />
+      <StatusBar backgroundColor="black" />
     </ThemeProvider>
   );
 }
