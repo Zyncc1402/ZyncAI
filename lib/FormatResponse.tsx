@@ -18,7 +18,7 @@ function formatResponse(text: string): React.ReactNode {
   parts.forEach((part, index) => {
     if (index % 2 === 1) {
       elements.push(
-        <Text key={index} className="font-pblack text-green-500">
+        <Text key={index} className="font-pmedium">
           {part}
         </Text>
       );

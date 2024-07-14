@@ -34,13 +34,8 @@ export default function RootLayout() {
       if (update.isAvailable) {
         Alert.alert(
           "An Update is Available",
-          "Click Install to Update to the latest Version",
+          "Click Install to Update to the Latest Version",
           [
-            {
-              text: "Cancel",
-              onPress: () => {},
-              style: "destructive",
-            },
             {
               text: "Install",
               onPress: async () => {
@@ -51,13 +46,12 @@ export default function RootLayout() {
             },
           ],
           {
-            cancelable: true,
-            onDismiss: () => {},
+            cancelable: false,
           }
         );
       }
     } catch (error) {
-      alert(`Error fetching latest Expo update: ${error}`);
+      alert(`Error fetching latest Expo update : ${error}`);
     }
   }
 
